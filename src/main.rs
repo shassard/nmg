@@ -10,9 +10,9 @@ fn blacklisted(filename: &str) -> bool {
     }
 }
 
-/// returns a cleaned up path name
-fn fix_name(path: String) -> String {
-    path.to_lowercase()
+/// returns a cleaned up filename
+fn fix_name(filename: &str) -> String {
+    filename.to_lowercase()
         .replace(" ", "-")
         .replace("_", "-")
         .replace("--", "-")
@@ -24,11 +24,11 @@ fn main() {
         let old_path = path.unwrap().path();
         let old_filename = old_path.file_name().unwrap().to_str().unwrap();
         if blacklisted(old_filename) {
-                println!("matched blacklist: {}", old_filename);
+                println!("skipping: {}", old_filename);
                 continue 'outer;
             }
-        let new_name = fix_name(String::from(old_filename));
-        if old_filename != new_name {
+        let new_name = fix_name(&old_filename);
+        if old_filename != new_name.as_str() {
             println!("{} -> {}", old_filename, new_name);
             fs::rename(old_filename, new_name).unwrap();
         }
