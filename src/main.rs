@@ -1,8 +1,9 @@
 use std::fs;
+use std::path::{PathBuf};
 
 /// check if a filename is blacklisted from being renamed
-fn blacklisted(filename: &str) -> bool {
-    match filename {
+fn blacklisted(file: std::path::PathBuf) -> bool {
+    match file.file_name().unwrap().to_str().unwrap() {
         "Cargo.lock" => true,
         "Cargo.toml" => true,
         "Makefile" => true,
@@ -11,26 +12,25 @@ fn blacklisted(filename: &str) -> bool {
 }
 
 /// returns a cleaned up filename
-fn fix_name(filename: &str) -> String {
-    filename.to_lowercase()
+fn fix_name(file: std::path::PathBuf) -> std::path::PathBuf {
+    PathBuf::from(file.file_name().unwrap().to_str().unwrap().to_lowercase()
         .replace(" ", "-")
         .replace("_", "-")
-        .replace("--", "-")
+        .replace("--", "-"))
 }
 
 fn main() {
     let paths = fs::read_dir(".").unwrap();
     'outer: for path in paths {
         let old_path = path.unwrap().path();
-        let old_filename = old_path.file_name().unwrap().to_str().unwrap();
-        if blacklisted(old_filename) {
-                println!("skipping: {}", old_filename);
+        if blacklisted(old_path.clone()) {
+                println!("skipping: {}", old_path.display());
                 continue 'outer;
             }
-        let new_name = fix_name(&old_filename);
-        if old_filename != new_name.as_str() {
-            println!("{} -> {}", old_filename, new_name);
-            fs::rename(old_filename, new_name).unwrap();
+        let new_path = fix_name(old_path.clone());
+        if old_path.file_name() != new_path.file_name() {
+            println!("{} -> {}", old_path.display(), new_path.display());
+            fs::rename(old_path, new_path).unwrap();
         }
     }
 }
