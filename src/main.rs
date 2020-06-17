@@ -24,7 +24,7 @@ fn main() {
     'outer: for path in paths {
         let old_path = path.unwrap().path();
         if blacklisted(old_path.clone()) {
-                println!("skipping: {}", old_path.display());
+                println!("skipping: {}", old_path.file_name().unwrap().to_string_lossy());
                 continue 'outer;
             }
         let new_path = fix_name(old_path.clone());
