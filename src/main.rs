@@ -6,7 +6,7 @@ struct Config {
 }
 
 /// check if a filename is blacklisted from being renamed
-fn blacklisted(file: std::path::PathBuf) -> bool {
+fn blacklisted(file: PathBuf) -> bool {
     match file.file_name().unwrap().to_str().unwrap() {
         "Cargo.lock" => true,
         "Cargo.toml" => true,
@@ -16,7 +16,7 @@ fn blacklisted(file: std::path::PathBuf) -> bool {
 }
 
 /// returns a cleaned up filename
-fn fix_name(file: std::path::PathBuf) -> std::path::PathBuf {
+fn fix_name(file: PathBuf) -> PathBuf {
     PathBuf::from(file.file_name().unwrap().to_str().unwrap().to_lowercase()
         .replace(" ", "-")
         .replace("_", "-")
