@@ -1,6 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
 
+struct Config {
+    force: bool,
+}
+
 /// check if a filename is blacklisted from being renamed
 fn blacklisted(file: std::path::PathBuf) -> bool {
     match file.file_name().unwrap().to_str().unwrap() {
@@ -20,10 +24,10 @@ fn fix_name(file: std::path::PathBuf) -> std::path::PathBuf {
 }
 
 fn main() {
-    let mut force = false;
+    let mut cnf = Config {force: false};
     for (k, v) in std::env::vars() {
         if k.as_str() == "FORCE" && v.as_str() == "1" {
-            force = true;
+            cnf.force = true;
         }
     }
 
@@ -40,7 +44,7 @@ fn main() {
 
         if old_path.file_name() != new_path.file_name() {
             println!("{} -> {}", old_path.display(), new_path.display());
-            if force {
+            if cnf.force {
                 fs::rename(old_path, new_path).unwrap();
             }
         }
