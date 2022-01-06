@@ -5,8 +5,8 @@ struct Config {
     force: bool,
 }
 
-/// check if a filename is blacklisted from being renamed
-fn blacklisted(file: PathBuf) -> bool {
+/// check if a filename is protected from being renamed
+fn isprotected(file: PathBuf) -> bool {
     match file.file_name().unwrap().to_str().unwrap() {
         "Cargo.lock" => true,
         "Cargo.toml" => true,
@@ -35,7 +35,7 @@ fn main() {
     for path in paths {
         let old_path = path.unwrap().path();
 
-        if blacklisted(old_path.clone()) {
+        if isprotected(old_path.clone()) {
             println!("skipping: {}", old_path.file_name().unwrap().to_string_lossy());
             continue;
         }
