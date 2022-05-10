@@ -15,16 +15,29 @@ fn is_protected(file: PathBuf) -> bool {
     }
 }
 
-/// returns a cleaned up filename
+/// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
 fn fix_name(file: PathBuf) -> PathBuf {
-    PathBuf::from(file.file_name().unwrap().to_str().unwrap().to_lowercase()
-        .replace(" ", "-")
-        .replace("_", "-")
-        .replace("--", "-"))
+    let filename = match file.file_name() {
+        Some(x) => x,
+        None => return file,
+    };
+
+    let fname = match filename.to_str() {
+        Some(x) => x,
+        None => return file,
+    };
+
+    PathBuf::from(
+        fname
+            .to_lowercase()
+            .replace(" ", "-")
+            .replace("_", "-")
+            .replace("--", "-"),
+    )
 }
 
 fn main() {
-    let mut cnf = Config {force: false};
+    let mut cnf = Config { force: false };
     for (k, v) in std::env::vars() {
         if k.as_str() == "FORCE" && v.as_str() == "1" {
             cnf.force = true;
@@ -36,7 +49,10 @@ fn main() {
         let old_path = path.unwrap().path();
 
         if is_protected(old_path.clone()) {
-            println!("skipping: {}", old_path.file_name().unwrap().to_string_lossy());
+            println!(
+                "skipping: {}",
+                old_path.file_name().unwrap().to_string_lossy()
+            );
             continue;
         }
 
