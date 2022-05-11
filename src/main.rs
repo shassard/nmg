@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 
 struct Config {
-    force: bool,
+    force: bool, // runs in dry-run otherwise
 }
 
 /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
@@ -71,10 +71,7 @@ fn main() {
         };
 
         if is_protected(old_path.clone()) {
-            println!(
-                "skipping: {}",
-                old_path.file_name().unwrap().to_string_lossy()
-            );
+            println!("skipping: {}", old_path.display());
             continue;
         }
 
