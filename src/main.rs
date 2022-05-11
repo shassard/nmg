@@ -80,9 +80,11 @@ fn main() {
         let new_path = fix_name(old_path.clone());
 
         if old_path.file_name() != new_path.file_name() {
-            println!("{} -> {}", old_path.display(), new_path.display());
             if cnf.force {
-                fs::rename(old_path, new_path).unwrap();
+                match fs::rename(old_path.clone(), new_path.clone()) {
+                    Ok(_) => println!("{:?} -> {:?}", old_path.display(), new_path.display()),
+                    Err(e) => println!("failed to rename: {:?}", e),
+                }
             }
         }
     }
