@@ -50,9 +50,10 @@ fn fix_name(file: PathBuf) -> PathBuf {
 
 fn main() {
     let mut cnf = Config { force: false };
-    for (k, v) in std::env::vars() {
-        if k.as_str() == "FORCE" && v.as_str() == "1" {
+    for arg in std::env::args() {
+        if arg.as_str() == "-f" {
             cnf.force = true;
+            println!("enabled file renaming")
         }
     }
 
@@ -83,7 +84,7 @@ fn main() {
             if cnf.force {
                 match fs::rename(old_path.clone(), new_path.clone()) {
                     Ok(_) => println!("{:?} -> {:?}", old_path.display(), new_path.display()),
-                    Err(e) => println!("failed to rename: {:?}", e),
+                    Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
                 }
             }
         }
