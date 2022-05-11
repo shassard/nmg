@@ -5,9 +5,19 @@ struct Config {
     force: bool,
 }
 
-/// check if a filename is protected from being renamed
+/// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
 fn is_protected(file: PathBuf) -> bool {
-    match file.file_name().unwrap().to_str().unwrap() {
+    let filename = match file.file_name() {
+        Some(x) => x,
+        None => return true,
+    };
+
+    let filestr = match filename.to_str() {
+        Some(x) => x,
+        None => return true,
+    };
+
+    match filestr {
         "Cargo.lock" => true,
         "Cargo.toml" => true,
         "Makefile" => true,
@@ -46,9 +56,18 @@ fn main() {
         }
     }
 
-    let paths = fs::read_dir(".").unwrap();
+    let paths = match fs::read_dir(".") {
+        Ok(x) => x,
+        Err(e) => panic!("Failed to read dir: {:?}", e),
+    };
     for path in paths {
-        let old_path = path.unwrap().path();
+        let old_path = match path {
+            Ok(x) => x.path(),
+            Err(e) => {
+                println!("bad path: {:?}", e);
+                continue;
+            }
+        };
 
         if is_protected(old_path.clone()) {
             println!(
