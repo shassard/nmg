@@ -17,12 +17,7 @@ fn is_protected(file: PathBuf) -> bool {
         None => return true,
     };
 
-    match filestr {
-        "Cargo.lock" => true,
-        "Cargo.toml" => true,
-        "Makefile" => true,
-        _ => false,
-    }
+    matches!(filestr, "Cargo.lock" | "Cargo.toml" | "Makefile")
 }
 
 /// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
@@ -40,11 +35,11 @@ fn fix_name(file: PathBuf) -> PathBuf {
     PathBuf::from(
         fname
             .to_lowercase()
-            .replace(" ", "-")
-            .replace("_", "-")
+            .replace(' ', "-")
+            .replace('_', "-")
             .replace("--", "-")
             .replace("&amp;", "and")
-            .replace("&", "and"),
+            .replace('&', "and"),
     )
 }
 
@@ -77,12 +72,10 @@ fn main() {
 
         let new_path = fix_name(old_path.clone());
 
-        if old_path.file_name() != new_path.file_name() {
-            if cnf.force {
-                match fs::rename(old_path.clone(), new_path.clone()) {
-                    Ok(_) => println!("{:?} -> {:?}", old_path.display(), new_path.display()),
-                    Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
-                }
+        if old_path.file_name() != new_path.file_name() && cnf.force {
+            match fs::rename(old_path.clone(), new_path.clone()) {
+                Ok(_) => println!("{:?} -> {:?}", old_path.display(), new_path.display()),
+                Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
             }
         }
     }
