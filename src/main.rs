@@ -37,6 +37,7 @@ fn fix_name(file: PathBuf) -> PathBuf {
             .to_lowercase()
             .replace(' ', "-")
             .replace('_', "-")
+            .replace(",-", ",")
             .replace("--", "-")
             .replace("&amp;", "and")
             .replace('&', "and"),
