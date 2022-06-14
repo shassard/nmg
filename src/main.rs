@@ -40,7 +40,8 @@ fn fix_name(file: PathBuf) -> PathBuf {
             .replace(",-", ",")
             .replace("--", "-")
             .replace("&amp;", "and")
-            .replace('&', "and"),
+            .replace('&', "and")
+            .replace("-(z-lib.org)", ""),
     )
 }
 
