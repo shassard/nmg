@@ -1,12 +1,14 @@
 use std::fs;
 use std::path::PathBuf;
+use regex::RegexSet;
 
 struct Config {
     force: bool, // runs in dry-run otherwise
+    protected: RegexSet, // all protected regex patterns
 }
 
 /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-fn is_protected(file: PathBuf) -> bool {
+fn is_protected(file: PathBuf, protections: RegexSet) -> bool {
     let filename = match file.file_name() {
         Some(x) => x,
         None => return true,
@@ -17,7 +19,7 @@ fn is_protected(file: PathBuf) -> bool {
         None => return true,
     };
 
-    matches!(filestr, "Cargo.lock" | "Cargo.toml" | "Makefile")
+    protections.is_match(filestr)
 }
 
 /// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
@@ -46,7 +48,13 @@ fn fix_name(file: PathBuf) -> PathBuf {
 }
 
 fn main() {
-    let mut cnf = Config { force: false };
+    let mut cnf = Config {
+        force: false,
+        protected: RegexSet::new(&[
+            r"^Cargo.*$",
+            r"^Makefile$",
+        ]).unwrap() };
+
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
             cnf.force = true;
@@ -67,7 +75,7 @@ fn main() {
             }
         };
 
-        if is_protected(old_path.clone()) {
+        if is_protected(old_path.clone(), cnf.protected.clone()) {
             println!("skipping: {}", old_path.display());
             continue;
         }
