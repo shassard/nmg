@@ -51,8 +51,9 @@ fn main() {
     let mut cnf = Config {
         force: false,
         protected: RegexSet::new(&[
-            r"^Cargo.*$",
+            r"^Cargo.*",
             r"^Makefile$",
+            r"^\..*",
         ]).unwrap() };
 
     for arg in std::env::args() {
