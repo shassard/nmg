@@ -8,7 +8,7 @@ struct Config {
 }
 
 /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-fn is_protected(file: PathBuf, protections: RegexSet) -> bool {
+fn is_protected(file: &PathBuf, protections: &RegexSet) -> bool {
     let filename = match file.file_name() {
         Some(x) => x,
         None => return true,
@@ -76,7 +76,7 @@ fn main() {
             }
         };
 
-        if is_protected(old_path.clone(), cnf.protected.clone()) {
+        if is_protected(&old_path, &cnf.protected) {
             println!("skipping: {}", old_path.display());
             continue;
         }
