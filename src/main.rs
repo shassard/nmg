@@ -59,8 +59,11 @@ fn main() {
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
             cnf.force = true;
-            println!("enabled file renaming")
         }
+    }
+
+    if !cnf.force {
+        println!("dry-run mode, pass '-f' argument to force renaming")
     }
 
     let paths = match fs::read_dir(".") {
@@ -83,10 +86,13 @@ fn main() {
 
         let new_path = fix_name(old_path.clone());
 
-        if old_path.file_name() != new_path.file_name() && cnf.force {
-            match fs::rename(old_path.clone(), new_path.clone()) {
-                Ok(_) => println!("{:?} -> {:?}", old_path.display(), new_path.display()),
-                Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
+        if old_path.file_name() != new_path.file_name() {
+            println!("{:?} -> {:?}", old_path.display(), new_path.display());
+            if cnf.force {
+                match fs::rename(old_path.clone(), new_path.clone()) {
+                    Ok(_) => continue,
+                    Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
+                }
             }
         }
     }
