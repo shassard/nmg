@@ -79,6 +79,11 @@ fn main() {
             }
         };
 
+        // only mangle real files
+        if ! old_path.is_file() {
+            continue;
+        }
+
         if is_protected(&old_path, &cnf.protected) {
             println!("skipping: {}", old_path.display());
             continue;
