@@ -1,9 +1,9 @@
+use regex::RegexSet;
 use std::fs;
 use std::path::PathBuf;
-use regex::RegexSet;
 
 struct Config {
-    force: bool, // runs in dry-run otherwise
+    force: bool,         // runs in dry-run otherwise
     protected: RegexSet, // all protected regex patterns
 }
 
@@ -50,11 +50,8 @@ fn fix_name(file: PathBuf) -> PathBuf {
 fn main() {
     let mut cnf = Config {
         force: false,
-        protected: RegexSet::new(&[
-            r"^Cargo.*",
-            r"^Makefile$",
-            r"^\..*",
-        ]).unwrap() };
+        protected: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
+    };
 
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
@@ -80,7 +77,7 @@ fn main() {
         };
 
         // only mangle real files
-        if ! old_path.is_file() {
+        if !old_path.is_file() {
             continue;
         }
 
