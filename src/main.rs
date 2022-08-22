@@ -4,11 +4,11 @@ use std::path::PathBuf;
 
 struct Config {
     force: bool,         // runs in dry-run otherwise
-    protected: RegexSet, // all protected regex patterns
+    skip_list: RegexSet, // all protected regex patterns
 }
 
 /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-fn is_protected(file: &PathBuf, protections: &RegexSet) -> bool {
+fn is_protected(file: &PathBuf, skip_list: &RegexSet) -> bool {
     let filename = match file.file_name() {
         Some(x) => x,
         None => return true,
@@ -19,7 +19,7 @@ fn is_protected(file: &PathBuf, protections: &RegexSet) -> bool {
         None => return true,
     };
 
-    protections.is_match(filestr)
+    skip_list.is_match(filestr)
 }
 
 /// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
@@ -50,7 +50,7 @@ fn fix_name(file: PathBuf) -> PathBuf {
 fn main() {
     let mut cnf = Config {
         force: false,
-        protected: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
+        skip_list: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
     };
 
     for arg in std::env::args() {
@@ -81,7 +81,7 @@ fn main() {
             continue;
         }
 
-        if is_protected(&old_path, &cnf.protected) {
+        if is_protected(&old_path, &cnf.skip_list) {
             println!("skipping: {}", old_path.display());
             continue;
         }
