@@ -2,24 +2,25 @@ use regex::RegexSet;
 use std::fs;
 use std::path::PathBuf;
 
-struct Config {
-    force: bool,         // runs in dry-run otherwise
-    skip_list: RegexSet, // all protected regex patterns
+struct SkipList {
+    pub protected_patterns: RegexSet,
 }
 
-/// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-fn is_protected(file: &PathBuf, skip_list: &RegexSet) -> bool {
-    let filename = match file.file_name() {
-        Some(x) => x,
-        None => return true,
-    };
+impl SkipList {
+    /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
+    fn is_protected(&self, file: PathBuf) -> bool {
+        let filename = match file.file_name() {
+            Some(x) => x,
+            None => return true,
+        };
 
-    let filestr = match filename.to_str() {
-        Some(x) => x,
-        None => return true,
-    };
+        let filestr = match filename.to_str() {
+            Some(x) => x,
+            None => return true,
+        };
 
-    skip_list.is_match(filestr)
+        self.protected_patterns.is_match(filestr)
+    }
 }
 
 /// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
@@ -48,18 +49,16 @@ fn fix_name(file: PathBuf) -> PathBuf {
 }
 
 fn main() {
-    let mut cnf = Config {
-        force: false,
-        skip_list: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
-    };
+    let mut force = false;
+    let skip_list = SkipList { protected_patterns: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap() };
 
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
-            cnf.force = true;
+            force = true;
         }
     }
 
-    if !cnf.force {
+    if !force {
         println!("dry-run mode, pass '-f' argument to force renaming")
     }
 
@@ -81,7 +80,7 @@ fn main() {
             continue;
         }
 
-        if is_protected(&old_path, &cnf.skip_list) {
+        if skip_list.is_protected(old_path.clone()) {
             println!("skipping: {}", old_path.display());
             continue;
         }
@@ -90,7 +89,7 @@ fn main() {
 
         if old_path.file_name() != new_path.file_name() {
             println!("{:?} -> {:?}", old_path.display(), new_path.display());
-            if cnf.force {
+            if force {
                 match fs::rename(old_path.clone(), new_path.clone()) {
                     Ok(_) => continue,
                     Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
