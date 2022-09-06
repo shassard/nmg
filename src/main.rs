@@ -8,35 +8,35 @@ struct SkipList {
 
 impl SkipList {
     /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-    fn is_protected(&self, file: PathBuf) -> bool {
-        let filename = match file.file_name() {
+    fn is_path_protected(&self, path: PathBuf) -> bool {
+        let filename = match path.file_name() {
             Some(x) => x,
             None => return true,
         };
 
-        let filestr = match filename.to_str() {
+        let filename_str = match filename.to_str() {
             Some(x) => x,
             None => return true,
         };
 
-        self.protected_patterns.is_match(filestr)
+        self.protected_patterns.is_match(filename_str)
     }
 }
 
 /// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
-fn fix_name(file: PathBuf) -> PathBuf {
-    let filename = match file.file_name() {
+fn fix_name(path: PathBuf) -> PathBuf {
+    let filename = match path.file_name() {
         Some(x) => x,
-        None => return file,
+        None => return path,
     };
 
-    let fname = match filename.to_str() {
+    let filename_str = match filename.to_str() {
         Some(x) => x,
-        None => return file,
+        None => return path,
     };
 
     PathBuf::from(
-        fname
+        filename_str
             .to_lowercase()
             .replace(' ', "-")
             .replace('_', "-")
@@ -80,7 +80,7 @@ fn main() {
             continue;
         }
 
-        if skip_list.is_protected(old_path.clone()) {
+        if skip_list.is_path_protected(old_path.clone()) {
             println!("skipping: {}", old_path.display());
             continue;
         }
