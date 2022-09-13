@@ -44,7 +44,8 @@ fn fix_name(path: PathBuf) -> PathBuf {
             .replace("--", "-")
             .replace("&amp;", "and")
             .replace('&', "and")
-            .replace("-(z-lib.org)", ""),
+            .replace("-(z-lib.org)", "")
+            .replace("-epub.epub", ".epub")
     )
 }
 
