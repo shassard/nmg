@@ -45,13 +45,15 @@ fn fix_name(path: PathBuf) -> PathBuf {
             .replace("&amp;", "and")
             .replace('&', "and")
             .replace("-(z-lib.org)", "")
-            .replace("-epub.epub", ".epub")
+            .replace("-epub.epub", ".epub"),
     )
 }
 
 fn main() {
     let mut force = false;
-    let skip_list = SkipList { protected_patterns: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap() };
+    let skip_list = SkipList {
+        protected_patterns: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
+    };
 
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
