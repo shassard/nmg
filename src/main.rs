@@ -2,13 +2,18 @@ use regex::RegexSet;
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Copy, Clone, Debug)]
+struct Config {
+    pub enable_rename: bool,
+}
+
 struct SkipList {
     pub protected_patterns: RegexSet,
 }
 
 impl SkipList {
     /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-    fn is_path_protected(&self, path: PathBuf) -> bool {
+    fn is_path_protected(&self, path: &PathBuf) -> bool {
         let filename = match path.file_name() {
             Some(x) => x,
             None => return true,
@@ -23,16 +28,16 @@ impl SkipList {
     }
 }
 
-/// returns a PathBuf with a cleaned up filename, or the original PathBuf if a failure occurs
-fn fix_name(path: PathBuf) -> PathBuf {
+/// returns a PathBuf with a cleaned up filename, or a clone of the original PathBuf if a failure occurs
+fn fix_name(path: &PathBuf) -> PathBuf {
     let filename = match path.file_name() {
         Some(x) => x,
-        None => return path,
+        None => return path.clone(),
     };
 
     let filename_str = match filename.to_str() {
         Some(x) => x,
-        None => return path,
+        None => return path.clone(),
     };
 
     PathBuf::from(
@@ -50,18 +55,21 @@ fn fix_name(path: PathBuf) -> PathBuf {
 }
 
 fn main() {
-    let mut force = false;
+    let mut cnf = Config {
+        enable_rename: false,
+    };
+
     let skip_list = SkipList {
         protected_patterns: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
     };
 
     for arg in std::env::args() {
         if arg.as_str() == "-f" {
-            force = true;
+            cnf.enable_rename = true;
         }
     }
 
-    if !force {
+    if !cnf.enable_rename {
         println!("dry-run mode, pass '-f' argument to force renaming")
     }
 
@@ -83,17 +91,17 @@ fn main() {
             continue;
         }
 
-        if skip_list.is_path_protected(old_path.clone()) {
+        if skip_list.is_path_protected(&old_path) {
             println!("skipping: {}", old_path.display());
             continue;
         }
 
-        let new_path = fix_name(old_path.clone());
+        let new_path = fix_name(&old_path);
 
         if old_path.file_name() != new_path.file_name() {
             println!("{:?} -> {:?}", old_path.display(), new_path.display());
-            if force {
-                match fs::rename(old_path.clone(), new_path.clone()) {
+            if cnf.enable_rename {
+                match fs::rename(&old_path, &new_path) {
                     Ok(_) => continue,
                     Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
                 }
