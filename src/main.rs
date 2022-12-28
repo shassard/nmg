@@ -10,35 +10,16 @@ struct Config<'r> {
 
 impl<'a> Config<'a> {
     /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
-    fn is_path_protected(&self, path: &PathBuf) -> bool {
-        let filename = match path.file_name() {
-            Some(x) => x,
-            None => return true,
-        };
-
-        let filename_str = match filename.to_str() {
-            Some(x) => x,
-            None => return true,
-        };
-
-        self.skip_list.is_match(filename_str)
+    fn is_path_protected(&self, path: &PathBuf) -> Option<bool> {
+        return Some(self.skip_list.is_match(path.file_name()?.to_str()?));
     }
 }
 
 /// returns a PathBuf with a cleaned up filename, or a clone of the original PathBuf if a failure occurs
 fn fix_name(path: &PathBuf) -> Option<PathBuf> {
-    let filename = match path.file_name() {
-        Some(x) => x,
-        None => return None
-    };
-
-    let filename_str = match filename.to_str() {
-        Some(x) => x,
-        None => return None
-    };
-
     let new = PathBuf::from(
-        filename_str
+        path.file_name()?
+            .to_str()?
             .to_lowercase()
             .replace(' ', "-")
             .replace('_', "-")
@@ -50,7 +31,9 @@ fn fix_name(path: &PathBuf) -> Option<PathBuf> {
             .replace("-epub.epub", ".epub"),
     );
 
-    if new.file_name() == path.file_name() { return None }
+    if new.file_name() == path.file_name() {
+        return None;
+    }
 
     Some(new)
 }
@@ -89,9 +72,12 @@ fn main() {
             continue;
         }
 
-        if cnf.is_path_protected(&old_path) {
-            println!("skipping: {}", old_path.display());
-            continue;
+        match cnf.is_path_protected(&old_path) {
+            None => {
+                println!("skipping: {}", old_path.display());
+                continue;
+            }
+            _ => {}
         }
 
         let new_path = fix_name(&old_path);
@@ -99,7 +85,9 @@ fn main() {
             None => continue,
             Some(v) => {
                 println!("{:?} -> {:?}", old_path.display(), v.display());
-                if !cnf.enable_rename { continue }
+                if !cnf.enable_rename {
+                    continue;
+                }
 
                 match fs::rename(&old_path, &v) {
                     Ok(_) => continue,
