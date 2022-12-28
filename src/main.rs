@@ -9,13 +9,13 @@ struct Config<'r> {
 }
 
 impl<'a> Config<'a> {
-    /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
+    /// check if a filename is protected from being renamed. when an error occurs, safely note the file as protected.
     fn is_path_protected(&self, path: &PathBuf) -> Option<bool> {
         Some(self.skip_list.is_match(path.file_name()?.to_str()?))
     }
 }
 
-/// returns a PathBuf with a cleaned up filename, or a clone of the original PathBuf if a failure occurs
+/// returns a PathBuf with a cleaned up filename, or None if a failure occurs or the filename wouldn't change.
 fn fix_name(path: &PathBuf) -> Option<PathBuf> {
     let new = PathBuf::from(
         path.file_name()?
@@ -38,14 +38,16 @@ fn fix_name(path: &PathBuf) -> Option<PathBuf> {
     Some(new)
 }
 
+/// do the work of renaming the filename from the DirEntry, following the rules defined in cnf.
 fn normalize_file(r: fs::DirEntry, cnf: &Config) {
     let old_path = r.path();
 
-    // only mangle real files
+    // only mangle real files (not directories, symlinks, etc)
     if !old_path.is_file() {
         return;
     }
 
+    // proceed when the file is not protected and we haven't encountered an error
     match cnf.is_path_protected(&old_path) {
         Some(false) => {}
         _ => {
@@ -71,6 +73,7 @@ fn normalize_file(r: fs::DirEntry, cnf: &Config) {
 }
 
 fn main() {
+    // configure sensible defaults
     let mut cnf = Config {
         enable_rename: false,
         skip_list: &RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
