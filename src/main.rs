@@ -38,6 +38,38 @@ fn fix_name(path: &PathBuf) -> Option<PathBuf> {
     Some(new)
 }
 
+fn normalize_file(r: fs::DirEntry, cnf: &Config) {
+    let old_path = r.path();
+
+    // only mangle real files
+    if !old_path.is_file() {
+        return;
+    }
+
+    match cnf.is_path_protected(&old_path) {
+        Some(false) => {}
+        _ => {
+            println!("skipping: {}", old_path.display());
+            return;
+        }
+    }
+
+    match fix_name(&old_path) {
+        None => return,
+        Some(v) => {
+            println!("{:?} -> {:?}", old_path.display(), v.display());
+            if !cnf.enable_rename {
+                return;
+            }
+
+            match fs::rename(&old_path, &v) {
+                Ok(_) => return,
+                Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
+            }
+        }
+    }
+}
+
 fn main() {
     let mut cnf = Config {
         enable_rename: false,
@@ -58,42 +90,11 @@ fn main() {
         Ok(x) => x,
         Err(e) => panic!("Failed to read dir: {:?}", e),
     };
+
     for path in paths {
-        let old_path = match path {
-            Ok(x) => x.path(),
-            Err(e) => {
-                println!("bad path: {:?}", e);
-                continue;
-            }
-        };
-
-        // only mangle real files
-        if !old_path.is_file() {
-            continue;
-        }
-
-        match cnf.is_path_protected(&old_path) {
-            Some(false) => {},
-            _ => {
-                println!("skipping: {}", old_path.display());
-                continue;
-            },
-        }
-
-        let new_path = fix_name(&old_path);
-        match new_path {
-            None => continue,
-            Some(v) => {
-                println!("{:?} -> {:?}", old_path.display(), v.display());
-                if !cnf.enable_rename {
-                    continue;
-                }
-
-                match fs::rename(&old_path, &v) {
-                    Ok(_) => continue,
-                    Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
-                }
-            }
+        match path {
+            Ok(x) => normalize_file(x, &cnf),
+            _ => continue,
         }
     }
 }
