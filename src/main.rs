@@ -3,15 +3,12 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Copy, Clone, Debug)]
-struct Config {
+struct Config<'a> {
     pub enable_rename: bool,
+    pub protected_patterns: &'a RegexSet,
 }
 
-struct SkipList {
-    pub protected_patterns: RegexSet,
-}
-
-impl SkipList {
+impl<'a> Config<'a> {
     /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
     fn is_path_protected(&self, path: &PathBuf) -> bool {
         let filename = match path.file_name() {
@@ -57,10 +54,7 @@ fn fix_name(path: &PathBuf) -> PathBuf {
 fn main() {
     let mut cnf = Config {
         enable_rename: false,
-    };
-
-    let skip_list = SkipList {
-        protected_patterns: RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
+        protected_patterns: &RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
     };
 
     for arg in std::env::args() {
@@ -91,7 +85,7 @@ fn main() {
             continue;
         }
 
-        if skip_list.is_path_protected(&old_path) {
+        if cnf.is_path_protected(&old_path) {
             println!("skipping: {}", old_path.display());
             continue;
         }
