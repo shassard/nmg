@@ -11,7 +11,7 @@ struct Config<'r> {
 impl<'a> Config<'a> {
     /// check if a filename is protected from being renamed, in case an error occurs internally mark the file as protected.
     fn is_path_protected(&self, path: &PathBuf) -> Option<bool> {
-        return Some(self.skip_list.is_match(path.file_name()?.to_str()?));
+        Some(self.skip_list.is_match(path.file_name()?.to_str()?))
     }
 }
 
@@ -73,11 +73,11 @@ fn main() {
         }
 
         match cnf.is_path_protected(&old_path) {
-            None => {
+            Some(false) => {},
+            _ => {
                 println!("skipping: {}", old_path.display());
                 continue;
-            }
-            _ => {}
+            },
         }
 
         let new_path = fix_name(&old_path);
