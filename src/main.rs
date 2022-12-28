@@ -3,9 +3,9 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Copy, Clone, Debug)]
-struct Config<'a> {
+struct Config<'r> {
     pub enable_rename: bool,
-    pub protected_patterns: &'a RegexSet,
+    pub skip_list: &'r RegexSet,
 }
 
 impl<'a> Config<'a> {
@@ -21,7 +21,7 @@ impl<'a> Config<'a> {
             None => return true,
         };
 
-        self.protected_patterns.is_match(filename_str)
+        self.skip_list.is_match(filename_str)
     }
 }
 
@@ -58,7 +58,7 @@ fn fix_name(path: &PathBuf) -> Option<PathBuf> {
 fn main() {
     let mut cnf = Config {
         enable_rename: false,
-        protected_patterns: &RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
+        skip_list: &RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
     };
 
     for arg in std::env::args() {
