@@ -5,6 +5,7 @@ use std::path::PathBuf;
 #[derive(Copy, Clone, Debug)]
 struct Config<'r, 'p> {
     pub enable_rename: bool,
+    pub show_skipped: bool,
     pub skip_list: &'r RegexSet,
     pub replacement_patterns: &'p Vec<(String, String)>,
 }
@@ -46,7 +47,9 @@ fn normalize_file(r: fs::DirEntry, cnf: &Config) {
     match cnf.is_path_protected(&old_path) {
         Some(false) => {}
         _ => {
-            println!("skipping: {}", old_path.display());
+            if cnf.show_skipped {
+                println!("skipping: {}", old_path.display());
+            }
             return;
         }
     }
@@ -71,6 +74,7 @@ fn main() {
     // configure sensible defaults
     let mut cnf = Config {
         enable_rename: false,
+        show_skipped: false,
         skip_list: &RegexSet::new(&[r"^Cargo.*", r"^Makefile$", r"^\..*"]).unwrap(),
         replacement_patterns: &vec![
             (" ".to_string(), "-".to_string()),
@@ -88,6 +92,7 @@ fn main() {
     for arg in std::env::args() {
         match arg.as_str() {
             "-f" => cnf.enable_rename = true,
+            "-s" => cnf.show_skipped = true,
             _ => {}
         }
     }
