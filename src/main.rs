@@ -26,18 +26,18 @@ impl<'a> Config<'a> {
 }
 
 /// returns a PathBuf with a cleaned up filename, or a clone of the original PathBuf if a failure occurs
-fn fix_name(path: &PathBuf) -> PathBuf {
+fn fix_name(path: &PathBuf) -> Option<PathBuf> {
     let filename = match path.file_name() {
         Some(x) => x,
-        None => return path.clone(),
+        None => return None
     };
 
     let filename_str = match filename.to_str() {
         Some(x) => x,
-        None => return path.clone(),
+        None => return None
     };
 
-    PathBuf::from(
+    let new = PathBuf::from(
         filename_str
             .to_lowercase()
             .replace(' ', "-")
@@ -48,7 +48,11 @@ fn fix_name(path: &PathBuf) -> PathBuf {
             .replace('&', "and")
             .replace("-(z-lib.org)", "")
             .replace("-epub.epub", ".epub"),
-    )
+    );
+
+    if new.file_name() == path.file_name() { return None }
+
+    Some(new)
 }
 
 fn main() {
@@ -91,11 +95,13 @@ fn main() {
         }
 
         let new_path = fix_name(&old_path);
+        match new_path {
+            None => continue,
+            Some(v) => {
+                println!("{:?} -> {:?}", old_path.display(), v.display());
+                if !cnf.enable_rename { continue }
 
-        if old_path.file_name() != new_path.file_name() {
-            println!("{:?} -> {:?}", old_path.display(), new_path.display());
-            if cnf.enable_rename {
-                match fs::rename(&old_path, &new_path) {
+                match fs::rename(&old_path, &v) {
                     Ok(_) => continue,
                     Err(e) => println!("failed to rename: {:?} {:?}", old_path.display(), e),
                 }
