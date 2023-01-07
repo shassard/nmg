@@ -1,6 +1,7 @@
 use regex::RegexSet;
 use std::fs;
 use std::path::PathBuf;
+use std::process;
 
 #[derive(Copy, Clone, Debug)]
 struct Config<'r, 'p> {
@@ -70,6 +71,13 @@ fn normalize_file(r: fs::DirEntry, cnf: &Config) {
     }
 }
 
+fn show_help() {
+    println!("file name munger");
+    println!("-f: perform destructive operations on matching filenames.");
+    println!("-s: show names of files that matched the skip list.");
+    process::exit(1);
+}
+
 fn main() {
     // configure sensible defaults
     let mut cnf = Config {
@@ -93,6 +101,7 @@ fn main() {
         match arg.as_str() {
             "-f" => cnf.enable_rename = true,
             "-s" => cnf.show_skipped = true,
+            "-h" => show_help(),
             _ => {}
         }
     }
